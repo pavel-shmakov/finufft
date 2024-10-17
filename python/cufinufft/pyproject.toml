@@ -23,3 +23,6 @@ classifiers = [
     "Environment :: GPU",
     "Topic :: Scientific/Engineering :: Mathematics"
     ]
+
+[tool.setuptools.package-data]
+cufinufft = ["libcufinufft.so"]

@@ -2,6 +2,7 @@
 *~
 *.a
 *.so
+!python/cufinufft/cufinufft/libcufinufft.so
 *.out
 *.o
 examples/example1d1
