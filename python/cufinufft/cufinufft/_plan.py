@@ -9,6 +9,7 @@ import collections.abc
 import numbers
 import sys
 import warnings
+import functools
 
 import numpy as np
 
@@ -209,7 +210,6 @@ class Plan:
             z       (float[M], optional): third coordinate of the nonuniform
                     points (source for type 1, target for type 2).
         """
-
         _x = _ensure_array_type(x, "x", self.real_dtype)
         _y = _ensure_array_type(y, "y", self.real_dtype)
         _z = _ensure_array_type(z, "z", self.real_dtype)
@@ -328,6 +328,33 @@ class Plan:
         self._references = []
 
 
+class PlanCache:
+    """Allows to reuse plans without having to explicitly use the "guru" API.
+    
+    Example usage:
+
+    ```
+    points1, points2, values1, values2, output_shape = ...
+    plan_cache = cufinufft.PlanCache()
+    spectrum = cufinufft.nufft3d1(*points1, values1, output_shape, plan_cache=plan_cache)
+    spectrum = cufinufft.nufft3d1(*points2, values2, output_shape, plan_cache=plan_cache)
+    del plan_cache  # Free up the memory if needed.
+    ```
+    """
+    def __init__(self, max_size = None) -> None:
+        """Initializer.
+        
+        Args:
+            max_size (int, optional): The maximum number of plans to cache. None means unlimited. Defaults to None.
+        """
+
+        @functools.lru_cache(maxsize=max_size)
+        def get_plan(*args, **kwargs):
+            return Plan(*args, **kwargs)
+        
+        self.get_plan = get_plan
+
+
 def _ensure_array_type(x, name, dtype, output=False):
     if x is None:
         return None
@@ -381,3 +408,5 @@ def _ensure_valid_pts(x, y, z, dim):
         raise TypeError(f"Plan dimension is {dim}, but `y` was specified")
 
     return x, y, z
+
+
